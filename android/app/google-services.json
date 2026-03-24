@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "77474731139",
+    "project_id": "wheelchairapp-636c4",
+    "storage_bucket": "wheelchairapp-636c4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:77474731139:android:87f978c9d368c7f42677b6",
+        "android_client_info": {
+          "package_name": "com.wheelchairapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0eTDlBMyvLTjdlrXo8XpILxnEq7-jlIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
