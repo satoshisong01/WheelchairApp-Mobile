@@ -1,39 +1,31 @@
-// send-test.js
 const admin = require('firebase-admin');
 const serviceAccount = require('./service-account.json');
 
-const YOUR_DEVICE_TOKEN =
-  'dadGvb08RSCLYVleVlT0AY:APA91bHVJ0lwUN1VYctvEgDjSHoXxr7SJajy63g4Xpgpegmx-0hU4BgVyw84vTTz_ul2w64K_w3VnA9XmnDXrbQEwQSs5gbuC3Sl1pgny9rfDhcINs3WK9o';
-
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 }
 
-// ... (위쪽 설정 동일)
+// 토큰 확인 필수!
+const YOUR_DEVICE_TOKEN =
+  'e2K8ITd-QVKFT_m4fIG0BB:APA91bHZrRe1VRgvdd7hwJqCL671CiGlvE4_5B6sGzwL1akZ4C44vBRL8Q04ykh7wFujPTLlCkcQ3s_FpIgkx30JhZxgT5l3ByYIE6TalND9mNB4r8kIDRE';
+
 const message = {
-  notification: {
-    title: '🔊 볼륨 테스트',
-    body: '벨소리를 끄고 미디어 볼륨만 켜보세요. 소리가 나야 합니다!',
+  data: {
+    title: '🚨 긴급 상황 발생',
+    body: '전동 휠체어 이상 감지! 즉시 확인하세요.',
+    timestamp: String(Date.now()), // 👈 여기가 중요합니다. 현재 시간을 보냄.
   },
   android: {
-    notification: {
-      channelId: 'emergency-silent', // 👈 앱에서 만든 '소리 없는 채널' ID
-      priority: 'high',
-      visibility: 'public',
-      // sound: 'alarm'  <-- ❌ 이거 뺍니다! (앱이 직접 재생하니까요)
-    },
+    priority: 'high',
   },
   token: YOUR_DEVICE_TOKEN,
 };
-// ... (전송 코드 동일)
 
 admin
   .messaging()
   .send(message)
   .then(response => {
-    console.log('✅ 성공! 메시지 전송 완료:', response);
+    console.log('✅ 전송 성공:', response);
     process.exit(0);
   })
   .catch(error => {
