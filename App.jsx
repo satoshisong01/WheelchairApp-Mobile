@@ -32,7 +32,7 @@ const SOCKET_URL = 'https://broker.firstcorea.com:8080';
 const WEB_URL = 'https://wheelchair2-front.vercel.app/mobile-view';
 
 // 📱 현재 앱 버전 (이 숫자가 서버보다 낮으면 업데이트 팝업이 뜸)
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 
 // 🔐 로그인 유지 만료 시간 (ms) - 현재 3일
 const LOGIN_EXPIRE_MS = 3 * 24 * 60 * 60 * 1000;
@@ -201,8 +201,8 @@ const App = () => {
       console.log(`✅ [Foreground] 알림 수신: ${remoteMessage.data?.title}`);
 
       // 소리 & 진동 — sound 필드에 따라 다른 소리 재생
-      const soundFile =
-        remoteMessage.data?.sound === 'ding' ? 'ding.mp3' : 'alarm.mp3';
+      const soundMap = { ding: 'ding.mp3', chair: 'chair.mp3' };
+      const soundFile = soundMap[remoteMessage.data?.sound] || 'alarm.mp3';
       const isComplete = remoteMessage.data?.sound === 'ding';
 
       Sound.setCategory('Alarm');

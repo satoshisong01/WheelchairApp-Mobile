@@ -53,7 +53,8 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
   console.log(`💀 백그라운드 알림 처리: ${messageId}`);
 
   // 소리 재생 — sound 필드에 따라 다른 소리 재생
-  const soundFile = remoteMessage.data?.sound === 'ding' ? 'ding.mp3' : 'alarm.mp3';
+  const soundMap = { ding: 'ding.mp3', chair: 'chair.mp3' };
+  const soundFile = soundMap[remoteMessage.data?.sound] || 'alarm.mp3';
   const isComplete = remoteMessage.data?.sound === 'ding';
 
   Sound.setCategory('Alarm');
