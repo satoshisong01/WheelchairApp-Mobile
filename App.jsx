@@ -11,6 +11,7 @@ import {
   LogBox,
   Linking,
   View,
+  BackHandler,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import messaging from '@react-native-firebase/messaging';
@@ -32,7 +33,7 @@ const SOCKET_URL = 'https://broker.firstcorea.com:8080';
 const WEB_URL = 'https://wheelchair2-front.vercel.app/mobile-view';
 
 // 📱 현재 앱 버전 (이 숫자가 서버보다 낮으면 업데이트 팝업이 뜸)
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 
 // 🔐 로그인 유지 만료 시간 (ms) - 현재 3일
 const LOGIN_EXPIRE_MS = 3 * 24 * 60 * 60 * 1000;
@@ -250,15 +251,35 @@ const App = () => {
     };
   }, []);
 
+  const webViewRef = useRef(null);
+  const canGoBackRef = useRef(false);
+
+  // 안드로이드 뒤로가기 버튼 → WebView 내 뒤로가기
+  useEffect(() => {
+    const onBackPress = () => {
+      if (canGoBackRef.current && webViewRef.current) {
+        webViewRef.current.goBack();
+        return true; // 기본 동작(앱 종료) 방지
+      }
+      return false; // 더 뒤로갈 곳 없으면 앱 종료
+    };
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <WebView
+        ref={webViewRef}
         source={{ uri: WEB_URL }}
         style={styles.webview}
         javaScriptEnabled
         domStorageEnabled
         onMessage={handleWebMessage}
+        onNavigationStateChange={(navState) => {
+          canGoBackRef.current = navState.canGoBack;
+        }}
       />
     </SafeAreaView>
   );
