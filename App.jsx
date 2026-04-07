@@ -32,7 +32,7 @@ const SOCKET_URL = 'https://broker.firstcorea.com:8080';
 const WEB_URL = 'https://wheelchair2-front.vercel.app/mobile-view';
 
 // 📱 현재 앱 버전 (이 숫자가 서버보다 낮으면 업데이트 팝업이 뜸)
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 // 🔐 로그인 유지 만료 시간 (ms) - 현재 3일
 const LOGIN_EXPIRE_MS = 3 * 24 * 60 * 60 * 1000;
@@ -174,11 +174,13 @@ const App = () => {
     };
     setupApp();
 
+    const appResumedAtRef = { current: 0 };
     const handleAppStateChange = async nextAppState => {
       if (
         appState.current.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
+        appResumedAtRef.current = Date.now();
         await notifee.cancelAllNotifications();
         await notifee.setBadgeCount(0);
       }
@@ -198,33 +200,47 @@ const App = () => {
       const alreadyProcessed = await isAlreadyProcessed(messageId);
       if (alreadyProcessed) return;
 
+      // 앱 복귀 직후 3초간 알림 무시 (백그라운드에서 이미 처리된 알림 중복 방지)
+      if (Date.now() - appResumedAtRef.current < 3000) {
+        console.log('⏳ 앱 복귀 직후 알림 무시:', messageId);
+        await markAsProcessed(messageId);
+        return;
+      }
+
       console.log(`✅ [Foreground] 알림 수신: ${remoteMessage.data?.title}`);
 
-      // 소리 & 진동 — sound 필드에 따라 다른 소리 재생
+      // 소리 & 진동 & 팝업 — 모두 동시에 확실히 실행
       const soundMap = { ding: 'ding.mp3', chair: 'chair.mp3' };
       const soundFile = soundMap[remoteMessage.data?.sound] || 'alarm.mp3';
       const isComplete = remoteMessage.data?.sound === 'ding';
+      const title = remoteMessage.data?.title ?? '🚨 긴급';
+      const body = remoteMessage.data?.body ?? '확인하세요';
 
-      Sound.setCategory('Alarm');
-      const alarm = new Sound(soundFile, Sound.MAIN_BUNDLE, error => {
-        if (!error) {
-          alarm.setVolume(1.0);
-          alarm.play();
-          setTimeout(
-            () => {
-              alarm.stop(() => alarm.release());
-            },
-            isComplete ? 2000 : 4000,
-          );
-        }
-      });
-
+      // 1. 진동 즉시 실행
       Vibration.vibrate(isComplete ? [0, 300] : [0, 500, 200, 500]);
-      Alert.alert(
-        remoteMessage.data?.title ?? '🚨 긴급',
-        remoteMessage.data?.body ?? '확인하세요',
-        [{ text: '확인', onPress: () => Vibration.cancel() }],
-      );
+
+      // 2. 팝업 즉시 실행
+      Alert.alert(title, body, [
+        { text: '확인', onPress: () => Vibration.cancel() },
+      ]);
+
+      // 3. 소리 재생 (로딩 실패해도 팝업/진동은 이미 실행됨)
+      try {
+        Sound.setCategory('Alarm');
+        const alarm = new Sound(soundFile, Sound.MAIN_BUNDLE, error => {
+          if (!error) {
+            alarm.setVolume(1.0);
+            alarm.play();
+            setTimeout(() => {
+              alarm.stop(() => alarm.release());
+            }, isComplete ? 2000 : 4000);
+          } else {
+            console.warn('🔊 소리 로딩 실패:', error);
+          }
+        });
+      } catch (e) {
+        console.warn('🔊 Sound 초기화 실패:', e);
+      }
       await markAsProcessed(messageId);
     });
 

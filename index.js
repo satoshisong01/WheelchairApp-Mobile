@@ -57,16 +57,22 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
   const soundFile = soundMap[remoteMessage.data?.sound] || 'alarm.mp3';
   const isComplete = remoteMessage.data?.sound === 'ding';
 
-  Sound.setCategory('Alarm');
-  const alarm = new Sound(soundFile, Sound.MAIN_BUNDLE, error => {
-    if (!error) {
-      alarm.setVolume(1.0);
-      alarm.play();
-      setTimeout(() => {
-        alarm.stop(() => alarm.release());
-      }, isComplete ? 2000 : 4000);
-    }
-  });
+  try {
+    Sound.setCategory('Alarm');
+    const alarm = new Sound(soundFile, Sound.MAIN_BUNDLE, error => {
+      if (!error) {
+        alarm.setVolume(1.0);
+        alarm.play();
+        setTimeout(() => {
+          alarm.stop(() => alarm.release());
+        }, isComplete ? 2000 : 4000);
+      } else {
+        console.warn('🔊 백그라운드 소리 로딩 실패:', error);
+      }
+    });
+  } catch (e) {
+    console.warn('🔊 백그라운드 Sound 초기화 실패:', e);
+  }
 
   // 채널 생성 & 배너
   await notifee.createChannel({
